@@ -1,44 +1,24 @@
 package com.sura.gastos_viajes_api.service;
 
 import com.sura.gastos_viajes_api.model.Gasto;
+import com.sura.gastos_viajes_api.repository.GastoRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class GastoService {
 
+    private final GastoRepository gastoRepository;
     private static final double IVA_RATE = 0.19;
     private static final double LIMITE = 1_000_000;
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yy");
 
-    private List<Gasto> cargarGastos() {
-        return List.of(
-                new Gasto(1, "Adam", parse("1/01/21"), 2_000_000),
-                new Gasto(1, "Adam", parse("2/01/21"), 1_000_000),
-                new Gasto(2, "Bolton", parse("1/01/21"), 400_000),
-                new Gasto(3, "Chelsea", parse("2/01/21"), 900_000),
-                new Gasto(2, "Bolton", parse("3/02/21"), 1_100_000),
-                new Gasto(6, "Warden", parse("2/01/21"), 5_100_000),
-                new Gasto(4, "Elsy", parse("2/01/21"), 4_000_000),
-                new Gasto(5, "Vincent", parse("3/02/21"), 899_999),
-                new Gasto(3, "Chelsea", parse("2/01/21"), 59_999),
-                new Gasto(1, "Adam", parse("3/02/21"), 500_000),
-                new Gasto(2, "Bolton", parse("2/01/21"), 500_000),
-                new Gasto(6, "Warden", parse("3/02/21"), 1_100_000),
-                new Gasto(3, "Chelsea", parse("3/02/21"), 1_100_000)
-        );
-    }
-
-    private LocalDate parse(String fecha) {
-        return LocalDate.parse(fecha, formatter);
+    public GastoService(GastoRepository gastoRepository) {
+        this.gastoRepository = gastoRepository;
     }
 
     public Map<String, Object> procesarGastos() {
-        List<Gasto> gastos = cargarGastos();
+        List<Gasto> gastos = gastoRepository.obtenerGastos();
 
         Map<String, Map<String, Double>> porEmpleadoMes = new HashMap<>();
         Map<String, Integer> nombreToId = new HashMap<>();
@@ -76,7 +56,6 @@ public class GastoService {
     private List<Map<String, Object>> generarResumenEmpleados(Map<String, Map<String, Double>> porEmpleadoMes,
                                                               Map<String, Integer> nombreToId) {
         List<Map<String, Object>> empleados = new ArrayList<>();
-
         List<String> nombresOrdenados = new ArrayList<>(porEmpleadoMes.keySet());
         Collections.sort(nombresOrdenados);
 
@@ -110,7 +89,6 @@ public class GastoService {
 
             empleados.add(resumenEmpleado);
         }
-
         return empleados;
     }
 
@@ -119,5 +97,4 @@ public class GastoService {
                 .mapToDouble(e -> (double) e.get("total_empleado"))
                 .sum();
     }
-
 }
