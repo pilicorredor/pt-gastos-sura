@@ -1,19 +1,20 @@
 package com.sura.gastos_viajes_api.controller;
 
+import com.sura.gastos_viajes_api.model.response.ProcesamientoGastosResponse;
 import com.sura.gastos_viajes_api.service.GastoService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
-@RequestMapping("/api/gastos")
+@RequestMapping("/api")
 public class GastoController {
-    @Autowired
-    private GastoService gastoService;
+    private final GastoService service;
 
-    @GetMapping
-    public Map<String, Object> obtenerGastos() {
-        return gastoService.procesarGastos();
+    public GastoController(GastoService service) {
+        this.service = service;
+    }
+
+    @GetMapping("/obtener-gastos")
+    public ProcesamientoGastosResponse procesar() {
+        return service.procesarGastos();
     }
 }

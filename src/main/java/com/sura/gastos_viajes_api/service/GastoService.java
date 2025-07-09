@@ -1,6 +1,9 @@
 package com.sura.gastos_viajes_api.service;
 
-import com.sura.gastos_viajes_api.model.Gasto;
+import com.sura.gastos_viajes_api.model.gasto.Gasto;
+import com.sura.gastos_viajes_api.model.response.DetalleMensual;
+import com.sura.gastos_viajes_api.model.response.EmpleadoResumen;
+import com.sura.gastos_viajes_api.model.response.ProcesamientoGastosResponse;
 import com.sura.gastos_viajes_api.repository.GastoRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,19 +20,15 @@ public class GastoService {
         this.gastoRepository = gastoRepository;
     }
 
-    public Map<String, Object> procesarGastos() {
+    public ProcesamientoGastosResponse procesarGastos() {
         List<Gasto> gastos = gastoRepository.obtenerGastos();
-
         Map<String, Map<String, Double>> porEmpleadoMes = new HashMap<>();
         Map<String, Integer> nombreToId = new HashMap<>();
-
         agruparGastosPorEmpleado(gastos, porEmpleadoMes, nombreToId);
-
-        List<Map<String, Object>> empleados = generarResumenEmpleados(porEmpleadoMes, nombreToId);
-
+        List<EmpleadoResumen> empleados = generarResumenEmpleados(porEmpleadoMes, nombreToId);
         double totalGeneral = calcularTotalGeneral(empleados);
 
-        return Map.of("total_general", totalGeneral, "empleados", empleados);
+        return new ProcesamientoGastosResponse(totalGeneral, empleados);
     }
 
     private void agruparGastosPorEmpleado(List<Gasto> gastos,
@@ -45,25 +44,22 @@ public class GastoService {
             }
 
             Map<String, Double> gastosPorMes = porEmpleadoMes.get(nombre);
-
             double montoActual = gastosPorMes.getOrDefault(mes, 0.0);
             gastosPorMes.put(mes, montoActual + monto);
-
             nombreToId.put(nombre, g.getId());
         }
     }
 
-    private List<Map<String, Object>> generarResumenEmpleados(Map<String, Map<String, Double>> porEmpleadoMes,
-                                                              Map<String, Integer> nombreToId) {
-        List<Map<String, Object>> empleados = new ArrayList<>();
+    private List<EmpleadoResumen> generarResumenEmpleados(Map<String, Map<String, Double>> porEmpleadoMes,
+                                                          Map<String, Integer> nombreToId) {
+        List<EmpleadoResumen> listaEmpleados = new ArrayList<>();
         List<String> nombresOrdenados = new ArrayList<>(porEmpleadoMes.keySet());
         Collections.sort(nombresOrdenados);
 
         for (String nombre : nombresOrdenados) {
             int id = nombreToId.get(nombre);
             Map<String, Double> gastosMes = porEmpleadoMes.get(nombre);
-
-            List<Map<String, Object>> detalle = new ArrayList<>();
+            List<DetalleMensual> detalle = new ArrayList<>();
             double totalEmpleado = 0;
 
             for (Map.Entry<String, Double> mesEntry : gastosMes.entrySet()) {
@@ -72,29 +68,16 @@ public class GastoService {
                 String asumidoPor = conIva > LIMITE ? "Empleado" : "SURA";
                 totalEmpleado += total;
 
-                detalle.add(Map.of(
-                        "mes", mesEntry.getKey(),
-                        "total", total,
-                        "total_con_iva", Math.round(conIva),
-                        "asumido_por", asumidoPor
-                ));
+                detalle.add(new DetalleMensual(mesEntry.getKey(), total, conIva, asumidoPor));
             }
-
-            Map<String, Object> resumenEmpleado = Map.of(
-                    "id", id,
-                    "nombre", nombre,
-                    "total_empleado", totalEmpleado,
-                    "detalle_mensual", detalle
-            );
-
-            empleados.add(resumenEmpleado);
+            listaEmpleados.add(new EmpleadoResumen(id, nombre, totalEmpleado, detalle));
         }
-        return empleados;
+        return listaEmpleados;
     }
 
-    private double calcularTotalGeneral(List<Map<String, Object>> empleados) {
+    private double calcularTotalGeneral(List<EmpleadoResumen> empleados) {
         return empleados.stream()
-                .mapToDouble(e -> (double) e.get("total_empleado"))
+                .mapToDouble(EmpleadoResumen::getTotalEmpleado)
                 .sum();
     }
 }

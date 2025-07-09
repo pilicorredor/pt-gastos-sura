@@ -1,4 +1,4 @@
-package com.sura.gastos_viajes_api.model;
+package com.sura.gastos_viajes_api.model.gasto;
 import java.time.LocalDate;
 
 public class Gasto {
