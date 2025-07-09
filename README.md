@@ -18,7 +18,7 @@ La aplicación implementa una API REST en Java 17 + Spring Boot que permite cons
 
 ## Tecnologías usadas
 - Java 17
-- Spring Boot 3.1
+- Spring Boot 3.5.3
 - Maven para construcción y gestión de dependencias
 - JUnit 5 para pruebas unitarias
 - CSV como fuente de datos (archivo plano)
