@@ -1,16 +1,20 @@
 package com.sura.gastos_viajes_api.model.response;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class ProcesamientoGastosResponse {
-    private final double totalGeneral;
+    private final BigDecimal totalGeneral;
+    private final BigDecimal totalGeneralConIva;
     private final List<EmpleadoResumen> empleados;
 
-    public ProcesamientoGastosResponse(double totalGeneral, List<EmpleadoResumen> empleados) {
+    public ProcesamientoGastosResponse(BigDecimal totalGeneral, BigDecimal totalGeneralConIva, List<EmpleadoResumen> empleados) {
         this.totalGeneral = totalGeneral;
+        this.totalGeneralConIva = totalGeneralConIva;
         this.empleados = empleados;
     }
 
-    public double getTotalGeneral() { return totalGeneral; }
+    public BigDecimal getTotalGeneral() { return totalGeneral; }
+    public BigDecimal getTotalGeneralConIva() { return totalGeneralConIva; }
     public List<EmpleadoResumen> getEmpleados() { return empleados; }
 }

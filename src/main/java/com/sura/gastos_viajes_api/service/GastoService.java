@@ -7,6 +7,8 @@ import com.sura.gastos_viajes_api.model.response.ProcesamientoGastosResponse;
 import com.sura.gastos_viajes_api.repository.GastoRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Service
@@ -26,9 +28,12 @@ public class GastoService {
         Map<String, Integer> nombreToId = new HashMap<>();
         agruparGastosPorEmpleado(gastos, porEmpleadoMes, nombreToId);
         List<EmpleadoResumen> empleados = generarResumenEmpleados(porEmpleadoMes, nombreToId);
-        double totalGeneral = calcularTotalGeneral(empleados);
+        BigDecimal totalGeneral = BigDecimal.valueOf(calcularTotalGeneral(empleados));
+        BigDecimal totalGeneralConIva = totalGeneral
+                .multiply(BigDecimal.ONE.add(BigDecimal.valueOf(IVA_RATE)))
+                .setScale(2, RoundingMode.HALF_UP);
 
-        return new ProcesamientoGastosResponse(totalGeneral, empleados);
+        return new ProcesamientoGastosResponse(totalGeneral, totalGeneralConIva, empleados);
     }
 
     private void agruparGastosPorEmpleado(List<Gasto> gastos,
@@ -61,16 +66,18 @@ public class GastoService {
             Map<String, Double> gastosMes = porEmpleadoMes.get(nombre);
             List<DetalleMensual> detalle = new ArrayList<>();
             double totalEmpleado = 0;
+            double totalEmpleadoConIva = 0;
 
             for (Map.Entry<String, Double> mesEntry : gastosMes.entrySet()) {
                 double total = mesEntry.getValue();
                 double conIva = total * (1 + IVA_RATE);
                 String asumidoPor = conIva > LIMITE ? "Empleado" : "SURA";
                 totalEmpleado += total;
+                totalEmpleadoConIva += conIva;
 
                 detalle.add(new DetalleMensual(mesEntry.getKey(), total, conIva, asumidoPor));
             }
-            listaEmpleados.add(new EmpleadoResumen(id, nombre, totalEmpleado, detalle));
+            listaEmpleados.add(new EmpleadoResumen(id, nombre, totalEmpleado, totalEmpleadoConIva, detalle));
         }
         return listaEmpleados;
     }

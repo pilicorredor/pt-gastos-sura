@@ -2,10 +2,10 @@ package com.sura.gastos_viajes_api.model.gasto;
 import java.time.LocalDate;
 
 public class Gasto {
-    private int id;
-    private String nombre;
-    private LocalDate fecha;
-    private double monto;
+    private final int id;
+    private final String nombre;
+    private final LocalDate fecha;
+    private final double monto;
 
     public Gasto(int id, String nombre, LocalDate fecha, double monto) {
         this.id = id;
